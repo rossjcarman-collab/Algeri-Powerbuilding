@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>16-Week Powerbuilding · PPL</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@400;500;600&display=swap');
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0f0f11; --surface: #18181c; --card: #1e1e24; --border: #2a2a33;
+    --squat: #e8483a; --bench: #3b82f6; --deadlift: #22c55e; --rest: #64748b;
+    --text: #f0f0f2; --muted: #7a7a8c; --success: #22c55e; --danger: #ef4444; --prescribed: #f59e0b;
+  }
+  body { background: var(--bg); color: var(--text); font-family: 'Barlow', sans-serif; min-height: 100vh; padding: 20px 14px 80px; }
+
+  header { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; }
+  .header-titles { min-width: 0; flex: 1 1 200px; }
+  .program-title { font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: clamp(1.5rem, 5.5vw, 2.6rem); letter-spacing: 0.03em; text-transform: uppercase; line-height: 1; overflow-wrap: break-word; }
+  .program-sub { font-family: 'Barlow Condensed', sans-serif; font-size: 0.82rem; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin-top: 5px; }
+  .header-btns { display: flex; gap: 6px; flex-shrink: 0; }
+  .icon-btn { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--muted); font-size: 1.1rem; transition: all .15s; }
+  .icon-btn:hover { border-color: var(--muted); color: var(--text); }
+  .icon-btn.sync-pending { border-color: var(--prescribed); color: var(--prescribed); }
+
+  .block-strip { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin-bottom: 8px; }
+  .block-cell { min-width: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 8px 6px; text-align: center; cursor: pointer; transition: all .2s; }
+  .block-cell:hover { border-color: var(--muted); }
+  .block-cell.active { border-color: var(--prescribed); background: rgba(245,158,11,0.1); }
+  .bc-label { font-family: 'Barlow Condensed', sans-serif; font-size: 0.58rem; font-weight: 600; letter-spacing: 0.13em; text-transform: uppercase; color: var(--muted); display: block; }
+  .bc-name { font-family: 'Barlow Condensed', sans-serif; font-size: 0.62rem; overflow-wrap: anywhere; font-weight: 700; text-transform: uppercase; display: block; margin-top: 2px; line-height: 1.15; }
+
+  .week-strip { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin-bottom: 18px; }
+  .week-cell { min-width: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 8px 6px; text-align: center; cursor: pointer; transition: all .2s; }
+  .week-cell:hover { border-color: var(--muted); }
+  .week-cell.active { border-color: var(--prescribed); background: rgba(245,158,11,0.1); }
+  .wc-label { font-family: 'Barlow Condensed', sans-serif; font-size: 0.62rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); display: block; }
+  .wc-rpe { font-size: 0.65rem; color: var(--muted); margin-top: 2px; display: block; }
+
+  .day-tabs { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; margin-bottom: 18px; }
+  .day-tab { min-width: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 7px; padding: 7px 2px; cursor: pointer; text-align: center; transition: all .2s; position: relative; }
+  .day-tab:hover { border-color: var(--muted); }
+  .day-tab .tab-label { font-family: 'Barlow Condensed', sans-serif; font-size: 0.5rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); display: block; }
+  .day-tab .tab-name { font-family: 'Barlow Condensed', sans-serif; font-size: 0.64rem; font-weight: 700; text-transform: uppercase; display: block; margin-top: 1px; line-height: 1.08; overflow-wrap: break-word; }
+  .day-tab .tab-done { position: absolute; top: 3px; right: 4px; font-size: 0.55rem; color: var(--success); display: none; }
+  .day-tab.completed .tab-done { display: block; }
+  .day-tab.active-squat { border-color: var(--squat); background: rgba(232,72,58,0.12); }
+  .day-tab.active-bench { border-color: var(--bench); background: rgba(59,130,246,0.12); }
+  .day-tab.active-deadlift { border-color: var(--deadlift); background: rgba(34,197,94,0.12); }
+  .day-tab.active-rest { border-color: var(--rest); background: rgba(100,116,139,0.15); }
+
+  .day-card { background: var(--card); border-radius: 12px; border: 1px solid var(--border); overflow: hidden; }
+  .day-card-header { padding: 14px 18px 12px; border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+  .day-card-title { font-family: 'Barlow Condensed', sans-serif; font-size: 1.25rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.03em; }
+  .day-card-desc { font-size: 0.76rem; color: var(--muted); margin-top: 3px; }
+  .badge { font-family: 'Barlow Condensed', sans-serif; font-size: 0.64rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; padding: 3px 9px; border-radius: 4px; white-space: nowrap; margin-top: 3px; flex-shrink: 0; }
+  .badge-squat { background: rgba(232,72,58,0.15); color: var(--squat); border: 1px solid rgba(232,72,58,0.3); }
+  .badge-bench { background: rgba(59,130,246,0.15); color: var(--bench); border: 1px solid rgba(59,130,246,0.3); }
+  .badge-deadlift { background: rgba(34,197,94,0.15); color: var(--deadlift); border: 1px solid rgba(34,197,94,0.3); }
+  .badge-rest { background: rgba(100,116,139,0.15); color: var(--rest); border: 1px solid rgba(100,116,139,0.3); }
+
+  .section-header { padding: 8px 18px 4px; display: flex; align-items: center; gap: 10px; }
+  .section-label { font-family: 'Barlow Condensed', sans-serif; font-size: 0.63rem; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); }
+  .section-rule { flex: 1; height: 1px; background: var(--border); }
+
+  .exercise-list { padding: 4px 0 8px; }
+  .exercise-row { padding: 10px 18px; border-bottom: 1px solid rgba(255,255,255,0.04); }
+  .exercise-row:last-child { border-bottom: none; }
+  .ex-name { font-family: 'Barlow Condensed', sans-serif; font-size: 0.96rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.02em; line-height: 1.2; }
+  .ex-prescription { font-size: 0.74rem; color: var(--muted); margin-top: 2px; }
+  .ex-prescription span { font-weight: 600; color: var(--text); }
+  .prescribed-tag { display: inline-block; background: rgba(245,158,11,0.15); color: var(--prescribed); border: 1px solid rgba(245,158,11,0.3); font-family: 'Barlow Condensed', sans-serif; font-size: 0.62rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 1px 6px; border-radius: 3px; margin-left: 6px; vertical-align: middle; }
+  .swap-btn { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; margin-left: 6px; border-radius: 4px; background: rgba(122,122,140,0.15); border: 1px solid rgba(122,122,140,0.3); color: var(--muted); font-size: 0.62rem; cursor: pointer; vertical-align: middle; transition: all .15s; }
+  .swap-btn:hover { color: var(--text); border-color: var(--muted); }
+  .swap-list-btn { display: block; width: 100%; text-align: left; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-family: 'Barlow', sans-serif; font-size: 0.82rem; padding: 10px 12px; cursor: pointer; margin-bottom: 6px; }
+  .swap-list-btn.active { border-color: var(--prescribed); background: rgba(245,158,11,0.12); color: var(--prescribed); font-weight: 600; }
+  .swap-list-btn:last-child { margin-bottom: 0; }
+
+  .sets-wrap { margin-top: 8px; display: flex; flex-direction: column; gap: 6px; }
+  .set-row { display: grid; grid-template-columns: 24px minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) 26px 20px; gap: 5px; align-items: center; }
+  .set-num { font-family: 'Barlow Condensed', sans-serif; font-size: 0.66rem; font-weight: 600; color: var(--muted); letter-spacing: 0.06em; }
+  .mini-input { background: var(--surface); border: 1px solid var(--border); border-radius: 5px; color: var(--text); font-family: 'Barlow', sans-serif; font-size: 0.75rem; text-align: center; width: 100%; padding: 6px 2px; transition: border-color .15s; -moz-appearance: textfield; }
+  .mini-input::-webkit-inner-spin-button, .mini-input::-webkit-outer-spin-button { -webkit-appearance: none; }
+  .mini-input:focus { outline: none; border-color: var(--muted); }
+  .mini-input::placeholder { color: var(--prescribed); font-size: 0.66rem; font-weight: 600; }
+  .mini-input.no-prescribed::placeholder { color: #3a3a4a; font-weight: 400; }
+  .set-check { width: 24px; height: 24px; border: 1.5px solid var(--border); border-radius: 5px; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .15s; flex-shrink: 0; }
+  .set-check:hover { border-color: var(--muted); }
+  .set-check svg { display: none; }
+  .set-check.done svg { display: block; }
+  .done-squat { border-color: var(--squat); background: var(--squat); }
+  .done-bench { border-color: var(--bench); background: var(--bench); }
+  .done-deadlift { border-color: var(--deadlift); background: var(--deadlift); }
+  .sync-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border); flex-shrink: 0; }
+  .sync-dot.synced { background: var(--success); }
+  .sync-dot.pending { background: var(--prescribed); }
+  .sync-dot.failed { background: var(--danger); }
+  .col-labels { display: grid; grid-template-columns: 24px minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) 26px 20px; gap: 5px; margin-bottom: 4px; }
+  .col-labels span { font-size: 0.56rem; letter-spacing: 0.08em; text-transform: uppercase; color: #4a4a5a; text-align: center; }
+
+  .notes-section { padding: 0 18px 14px; }
+  .notes-label { font-family: 'Barlow Condensed', sans-serif; font-size: 0.66rem; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin-bottom: 5px; display: block; }
+  .notes-textarea { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-family: 'Barlow', sans-serif; font-size: 0.8rem; padding: 8px 10px; resize: vertical; min-height: 46px; transition: border-color .15s; }
+  .notes-textarea:focus { outline: none; border-color: var(--muted); }
+  .notes-textarea::placeholder { color: #3a3a48; }
+  .day-footer { padding: 14px 18px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+  .progress-wrap { flex: 1; }
+  .progress-label { font-size: 0.7rem; color: var(--muted); margin-bottom: 5px; display: flex; justify-content: space-between; }
+  .progress-bar-bg { height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .progress-bar-fill { height: 100%; border-radius: 3px; width: 0%; transition: width .3s ease; }
+  .fill-squat { background: var(--squat); } .fill-bench { background: var(--bench); } .fill-deadlift { background: var(--deadlift); }
+  .finish-btn { font-family: 'Barlow Condensed', sans-serif; font-size: 0.8rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer; transition: opacity .2s; color: #fff; white-space: nowrap; }
+  .finish-btn:disabled { opacity: 0.35; cursor: default; }
+  .finish-squat { background: var(--squat); } .finish-bench { background: var(--bench); } .finish-deadlift { background: var(--deadlift); } .finish-rest { background: var(--rest); }
+  .legend { display: flex; align-items: center; gap: 6px; font-size: 0.68rem; color: var(--muted); margin-bottom: 12px; padding: 7px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; }
+  .legend-dot { width: 7px; height: 7px; background: var(--prescribed); border-radius: 50%; flex-shrink: 0; }
+  .rest-card { padding: 40px 20px; text-align: center; }
+  .rest-card .ex-name { font-size: 1.3rem; margin-bottom: 6px; }
+
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--success); color: #000; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 0.85rem; letter-spacing: 0.08em; text-transform: uppercase; padding: 10px 20px; border-radius: 8px; opacity: 0; transition: opacity .3s, transform .3s; pointer-events: none; z-index: 100; max-width: 90vw; text-align: center; }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast.err { background: var(--danger); color: #fff; }
+
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; align-items: flex-end; justify-content: center; z-index: 200; }
+  .overlay.show { display: flex; }
+  .panel { position: relative; background: var(--card); border: 1px solid var(--border); border-radius: 14px 14px 0 0; width: 100%; max-width: 480px; max-height: 85vh; overflow-y: auto; padding: 18px 20px 26px; }
+  .panel-title { font-family: 'Barlow Condensed', sans-serif; font-size: 1.15rem; font-weight: 900; text-transform: uppercase; margin-bottom: 4px; }
+  .panel-sub { font-size: 0.76rem; color: var(--muted); margin-bottom: 16px; }
+  .field-label { font-family: 'Barlow Condensed', sans-serif; font-size: 0.66rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 5px; display: block; margin-top: 14px; }
+  .full-input { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-family: 'Barlow', sans-serif; font-size: 0.85rem; padding: 10px 12px; }
+  .full-input:focus { outline: none; border-color: var(--muted); }
+  .btn-row { display: flex; gap: 8px; margin-top: 18px; }
+  .btn { font-family: 'Barlow Condensed', sans-serif; font-size: 0.8rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 10px 16px; border-radius: 6px; border: 1px solid var(--border); cursor: pointer; background: var(--surface); color: var(--text); flex: 1; }
+  .btn.primary { background: var(--prescribed); color: #111; border-color: var(--prescribed); }
+  .btn:disabled { opacity: 0.5; cursor: default; }
+  .status-line { font-size: 0.74rem; margin-top: 10px; color: var(--muted); min-height: 1.2em; }
+  .status-line.ok { color: var(--success); }
+  .status-line.bad { color: var(--danger); }
+  .close-x { position: absolute; top: 12px; right: 16px; color: var(--muted); font-size: 1.3rem; cursor: pointer; background: none; border: none; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-titles">
+    <div class="program-title">16-Week Powerbuilding</div>
+    <div class="program-sub">Push · Pull · Legs · Upper · Lower · RPE Autoregulated</div>
+  </div>
+  <div class="header-btns">
+    <button class="icon-btn" id="bwBtn" title="Log bodyweight">⚖</button>
+    <button class="icon-btn" id="syncAllBtn" title="Sync pending sets">☁</button>
+    <button class="icon-btn" id="settingsBtn" title="Settings">⚙</button>
+  </div>
+</header>
+
+<div class="block-strip" id="blockStrip"></div>
+<div class="week-strip" id="weekStrip"></div>
+<div class="day-tabs" id="dayTabs"></div>
+<div class="legend"><div class="legend-dot"></div><span>Amber placeholders = prescribed weight/RPE target, or last week's logged numbers for hypertrophy and accessory work · type your actual numbers over them</span></div>
+<div id="dayContent"></div>
+<div class="toast" id="toast"></div>
+
+<div class="overlay" id="settingsOverlay">
+  <div class="panel">
+    <button class="close-x" data-close="settingsOverlay">✕</button>
+    <div class="panel-title">Settings</div>
+    <div class="panel-sub">Connect this app to your PPL Powerbuilding Tracker Google Sheet.</div>
+    <label class="field-label">Apps Script Web App URL</label>
+    <input class="full-input" id="webAppUrl" placeholder="https://script.google.com/macros/s/.../exec">
+    <div class="btn-row">
+      <button class="btn" id="testConnBtn">Test Connection</button>
+      <button class="btn primary" id="saveUrlBtn">Save</button>
+    </div>
+    <div class="status-line" id="connStatus"></div>
+    <label class="field-label">How the plan works</label>
+    <div class="panel-sub" style="margin-bottom:0;">Four 4-week blocks. Heavy days (Mon Squat, Tue Bench, Wed Deadlift) use one RPE top set plus two backoffs at about 90% of the top set. RPE climbs 6 / 7 / 8 / 9 across each block and top-set reps drop 6 → 4 → 3 → 2. Fri (Upper) and Sat (Lower) are the higher-rep hypertrophy bench and squat days. Weights come from your training maxes in the Sheet's Plan tab: change the starting 1RMs there, then tap ☁ to pull the updated plan into the app.</div>
+  </div>
+</div>
+
+<div class="overlay" id="bwOverlay">
+  <div class="panel">
+    <button class="close-x" data-close="bwOverlay">✕</button>
+    <div class="panel-title">Log Bodyweight</div>
+    <label class="field-label">Date</label>
+    <input class="full-input" id="bwDate" type="date">
+    <label class="field-label">Bodyweight (lbs)</label>
+    <input class="full-input" id="bwWeight" type="number" placeholder="e.g. 180">
+    <label class="field-label">Notes</label>
+    <input class="full-input" id="bwNotes" placeholder="optional">
+    <div class="btn-row"><button class="btn primary" id="bwSaveBtn">Log Bodyweight</button></div>
+    <div class="status-line" id="bwStatus"></div>
+  </div>
+</div>
+
+<div class="overlay" id="swapOverlay">
+  <div class="panel">
+    <button class="close-x" data-close="swapOverlay">✕</button>
+    <div class="panel-title" id="swapTitle">Swap Exercise</div>
+    <div class="panel-sub" id="swapSub"></div>
+    <div id="swapList"></div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════════════
+// PROGRAM DATA: generated from the same numbers as the Sheet's Plan tab.
+// Rows are [week, lift, setType, weight, reps, rpe].
+// ══════════════════════════════════════════════════════════════════════
+const PLAN_ROWS = [
+  [1, "Squat", "Top Set", 175, 6, 6],
+  [1, "Squat", "Backoff", 160, 6, 5],
+  [1, "Bench", "Top Set", 175, 6, 6],
+  [1, "Bench", "Backoff", 160, 6, 5],
+  [1, "Deadlift", "Top Set", 190, 6, 6],
+  [1, "Deadlift", "Backoff", 170, 6, 5],
+  [2, "Squat", "Top Set", 180, 6, 7],
+  [2, "Squat", "Backoff", 160, 6, 6],
+  [2, "Bench", "Top Set", 180, 6, 7],
+  [2, "Bench", "Backoff", 160, 6, 6],
+  [2, "Deadlift", "Top Set", 195, 6, 7],
+  [2, "Deadlift", "Backoff", 175, 6, 6],
+  [3, "Squat", "Top Set", 185, 6, 8],
+  [3, "Squat", "Backoff", 165, 6, 7],
+  [3, "Bench", "Top Set", 185, 6, 8],
+  [3, "Bench", "Backoff", 165, 6, 7],
+  [3, "Deadlift", "Top Set", 200, 6, 8],
+  [3, "Deadlift", "Backoff", 180, 6, 7],
+  [4, "Squat", "Top Set", 190, 6, 9],
+  [4, "Squat", "Backoff", 170, 6, 8],
+  [4, "Bench", "Top Set", 190, 6, 9],
+  [4, "Bench", "Backoff", 170, 6, 8],
+  [4, "Deadlift", "Top Set", 205, 6, 9],
+  [4, "Deadlift", "Backoff", 185, 6, 8],
+  [5, "Squat", "Top Set", 195, 4, 6],
+  [5, "Squat", "Backoff", 175, 4, 5],
+  [5, "Bench", "Top Set", 190, 4, 6],
+  [5, "Bench", "Backoff", 170, 4, 5],
+  [5, "Deadlift", "Top Set", 210, 4, 6],
+  [5, "Deadlift", "Backoff", 190, 4, 5],
+  [6, "Squat", "Top Set", 200, 4, 7],
+  [6, "Squat", "Backoff", 180, 4, 6],
+  [6, "Bench", "Top Set", 195, 4, 7],
+  [6, "Bench", "Backoff", 175, 4, 6],
+  [6, "Deadlift", "Top Set", 220, 4, 7],
+  [6, "Deadlift", "Backoff", 200, 4, 6],
+  [7, "Squat", "Top Set", 205, 4, 8],
+  [7, "Squat", "Backoff", 185, 4, 7],
+  [7, "Bench", "Top Set", 200, 4, 8],
+  [7, "Bench", "Backoff", 180, 4, 7],
+  [7, "Deadlift", "Top Set", 225, 4, 8],
+  [7, "Deadlift", "Backoff", 205, 4, 7],
+  [8, "Squat", "Top Set", 210, 4, 9],
+  [8, "Squat", "Backoff", 190, 4, 8],
+  [8, "Bench", "Top Set", 205, 4, 9],
+  [8, "Bench", "Backoff", 185, 4, 8],
+  [8, "Deadlift", "Top Set", 230, 4, 9],
+  [8, "Deadlift", "Backoff", 205, 4, 8],
+  [9, "Squat", "Top Set", 210, 3, 6],
+  [9, "Squat", "Backoff", 190, 3, 5],
+  [9, "Bench", "Top Set", 200, 3, 6],
+  [9, "Bench", "Backoff", 180, 3, 5],
+  [9, "Deadlift", "Top Set", 225, 3, 6],
+  [9, "Deadlift", "Backoff", 205, 3, 5],
+  [10, "Squat", "Top Set", 215, 3, 7],
+  [10, "Squat", "Backoff", 195, 3, 6],
+  [10, "Bench", "Top Set", 205, 3, 7],
+  [10, "Bench", "Backoff", 185, 3, 6],
+  [10, "Deadlift", "Top Set", 235, 3, 7],
+  [10, "Deadlift", "Backoff", 210, 3, 6],
+  [11, "Squat", "Top Set", 220, 3, 8],
+  [11, "Squat", "Backoff", 200, 3, 7],
+  [11, "Bench", "Top Set", 215, 3, 8],
+  [11, "Bench", "Backoff", 195, 3, 7],
+  [11, "Deadlift", "Top Set", 240, 3, 8],
+  [11, "Deadlift", "Backoff", 215, 3, 7],
+  [12, "Squat", "Top Set", 225, 3, 9],
+  [12, "Squat", "Backoff", 205, 3, 8],
+  [12, "Bench", "Top Set", 220, 3, 9],
+  [12, "Bench", "Backoff", 200, 3, 8],
+  [12, "Deadlift", "Top Set", 245, 3, 9],
+  [12, "Deadlift", "Backoff", 220, 3, 8],
+  [13, "Squat", "Top Set", 225, 2, 6],
+  [13, "Squat", "Backoff", 205, 2, 5],
+  [13, "Bench", "Top Set", 210, 2, 6],
+  [13, "Bench", "Backoff", 190, 2, 5],
+  [13, "Deadlift", "Top Set", 240, 2, 6],
+  [13, "Deadlift", "Backoff", 215, 2, 5],
+  [14, "Squat", "Top Set", 230, 2, 7],
+  [14, "Squat", "Backoff", 205, 2, 6],
+  [14, "Bench", "Top Set", 220, 2, 7],
+  [14, "Bench", "Backoff", 200, 2, 6],
+  [14, "Deadlift", "Top Set", 250, 2, 7],
+  [14, "Deadlift", "Backoff", 225, 2, 6],
+  [15, "Squat", "Top Set", 240, 2, 8],
+  [15, "Squat", "Backoff", 215, 2, 7],
+  [15, "Bench", "Top Set", 225, 2, 8],
+  [15, "Bench", "Backoff", 205, 2, 7],
+  [15, "Deadlift", "Top Set", 255, 2, 8],
+  [15, "Deadlift", "Backoff", 230, 2, 7],
+  [16, "Squat", "Top Set", 245, 2, 9],
+  [16, "Squat", "Backoff", 220, 2, 8],
+  [16, "Bench", "Top Set", 230, 2, 9],
+  [16, "Bench", "Backoff", 205, 2, 8],
+  [16, "Deadlift", "Top Set", 265, 2, 9],
+  [16, "Deadlift", "Backoff", 240, 2, 8]
+];
+const PLAN = {};
+function buildPlan() {
+  PLAN_ROWS.forEach(r => { PLAN[`${r[0]}|${r[1]}|${r[2]}`] = { weight:r[3], reps:r[4], rpe:r[5] }; });
+}
+buildPlan();
+const PLAN_DEFAULTS = JSON.parse(JSON.stringify(PLAN));
+
+const BLOCKS = [
+  { num:1, name:'Hypertrophy', weeks:[1,2,3,4] },
+  { num:2, name:'Str-Hyp',     weeks:[5,6,7,8] },
+  { num:3, name:'Strength',    weeks:[9,10,11,12] },
+  { num:4, name:'Peak',        weeks:[13,14,15,16] },
+];
+
+// Rep/set rules. 'c' = compound accessory, 'i' = isolation accessory (index = block - 1).
+const ACC_REPS = { c:['10-12','8-10','6-8','6-8'], i:['12-15','12-15','10-12','10-12'] };
+function accSets(block) { return block.num === 4 ? 2 : 3; }   // Block 4 drops one set
+// Hypertrophy bench/squat (Fri/Sat): sets and reps per block; RPE 7 in weeks 1-2 of a block, 8 in weeks 3-4.
+const HYPER_SETS = [4,4,3,3];
+const HYPER_REPS = ['10-12','8-10','8-10','8'];
+const HYPER_START_WEIGHT = 145;   // Block 1, Week 1 only; later weeks use last week's numbers
+
+const DAY_CFG = {
+  day1: { accessories:[ ['Romanian Deadlift','c'], ['Bulgarian Split Squat','c'], ['Standing Calf Raise','i'], ['Hanging Knee Raise','i'] ] },
+  day2: { accessories:[ ['Seated DB Shoulder Press','c'], ['Dips','c'], ['DB Lateral Raise','i'], ['Overhead Tricep Extension','i'] ] },
+  day3: { accessories:[ ['Pull-Ups','c'], ['Single-Arm DB Row','c'], ['DB Shrugs','i'], ['EZ-Bar Preacher Curl','i'], ['Forearm Curl (DB)','i'] ] },
+  day5: { hyper:'Bench Press (Hypertrophy)', accessories:[ ['Barbell Row','c'], ['Chest Fly Machine','i'], ['Hammer Curl (DB)','i'], ['Cable Tricep Pushdown','i'] ] },
+  day6: { hyper:'Squat (Hypertrophy)', accessories:[ ['Walking Lunge','c'], ['Barbell Hip Thrust','c'], ['Seated Calf Raise (DB)','i'], ['Weighted Ab Work','i'] ] },
+};
+
+const EXERCISE_DB = {
+  hyper: {
+    bench: ['Bench Press (Hypertrophy)', 'Close-Grip Bench Press', 'Paused Bench Press', 'Tempo Bench Press', 'Flat DB Press'],
+    squat: ['Squat (Hypertrophy)', 'Paused Squat', 'Tempo Squat', 'Front Squat'],
+  },
+  accessory: {
+    Legs: ['Romanian Deadlift', 'DB Romanian Deadlift', 'Single-Leg RDL', 'Bulgarian Split Squat', 'DB Split Squat', 'Walking Lunge', 'Reverse Lunge', 'Goblet Squat', 'DB Step-Up', 'Barbell Hip Thrust', 'Standing Calf Raise', 'Seated Calf Raise (DB)', 'Single-Leg Calf Raise'],
+    Push: ['Seated DB Shoulder Press', 'Standing DB Shoulder Press', 'Barbell Overhead Press', 'Incline DB Press', 'Flat DB Press', 'Dips', 'Close-Grip Bench Press', 'Chest Fly Machine', 'DB Fly', 'DB Lateral Raise', 'DB Front Raise', 'Overhead Tricep Extension', 'Cable Tricep Pushdown', 'Cable Rope Tricep Extension', 'DB Skull Crusher'],
+    Pull: ['Pull-Ups', 'Chin-Ups', 'Barbell Row', 'Single-Arm DB Row', 'DB Shrugs', 'Barbell Shrugs', 'EZ-Bar Preacher Curl', 'DB Bicep Curl', 'Hammer Curl (DB)', 'Incline DB Curl', 'Forearm Curl (DB)', 'Reverse Wrist Curl', 'Reverse Curl (EZ-Bar)'],
+    Core: ['Hanging Knee Raise', 'Hanging Leg Raise', 'Weighted Ab Work', 'Weighted Plank (DB)', 'Russian Twist (DB)', 'DB Side Bend', 'Cable Crunch'],
+  },
+};
+const CATEGORY_LOOKUP = {};
+Object.keys(EXERCISE_DB.accessory).forEach(cat => { EXERCISE_DB.accessory[cat].forEach(n => { CATEGORY_LOOKUP[n] = cat; }); });
+function categoryForAccessory(name) { return CATEGORY_LOOKUP[name] || 'Uncategorized'; }
+
+// session names must match SESSIONS in Code.gs exactly
+const DAY_META = {
+  day1:{ label:'Mon', tab:'Legs',  title:'Legs (Heavy Squat)',           desc:'Heavy squat top set + backoffs, then leg accessories.', type:'squat',    lift:'Squat',    session:'Day1 - Legs (Squat Main)',          kind:'main' },
+  day2:{ label:'Tue', tab:'Push',  title:'Push (Heavy Bench)',           desc:'Heavy bench top set + backoffs, then push accessories.', type:'bench',    lift:'Bench',    session:'Day2 - Push (Bench Main)',          kind:'main' },
+  day3:{ label:'Wed', tab:'Pull',  title:'Pull (Heavy Deadlift)',        desc:'Heavy deadlift top set + backoffs, then pull accessories.', type:'deadlift', lift:'Deadlift', session:'Day3 - Pull (Deadlift Main)',       kind:'main' },
+  day4:{ label:'Thu', tab:'Rest',  title:'Rest / Active Recovery',       type:'rest', lift:null, session:null, kind:'rest' },
+  day5:{ label:'Fri', tab:'Upper', title:'Upper (Bench Hypertrophy)',    desc:'Higher-rep bench, then upper-body accessories.', type:'bench',    lift:'Bench',    session:'Day5 - Upper (Bench Hypertrophy)',  kind:'hyper' },
+  day6:{ label:'Sat', tab:'Lower', title:'Lower (Squat Hypertrophy)',    desc:'Higher-rep squat, then lower-body accessories.', type:'squat',    lift:'Squat',    session:'Day6 - Lower (Squat Hypertrophy)',  kind:'hyper' },
+  day7:{ label:'Sun', tab:'Rest',  title:'Rest / Active Recovery',       type:'rest', lift:null, session:null, kind:'rest' },
+};
+const DAY_ORDER = ['day1','day2','day3','day4','day5','day6','day7'];
+function dayKeyForSession(session) {
+  for (const dk of DAY_ORDER) if (DAY_META[dk].session === session) return dk;
+  return null;
+}
+function blockForWeek(week) { return BLOCKS.find(b => b.weeks.includes(week)); }
+function weekInBlock(week) { return blockForWeek(week).weeks.indexOf(week) + 1; }
+function rpeForWeek(week) { return 6 + weekInBlock(week) - 1; }
+
+function resolveDay(week, dayKey) {
+  const meta = DAY_META[dayKey];
+  const block = blockForWeek(week);
+  const wib = weekInBlock(week);
+  const cfg = DAY_CFG[dayKey] || {};
+  if (meta.kind === 'rest') return { meta, block, week, exercises: [] };
+
+  const exercises = [];
+  const prevMap = prevWeekAccessoryMap(week, dayKey);
+  function attachPrev(ex) { const rows = prevMap[ex.name]; if (rows && rows.length) ex.prevWeekSets = rows; }
+
+  if (meta.kind === 'main') {
+    const top = PLAN[`${week}|${meta.lift}|Top Set`];
+    const bo = PLAN[`${week}|${meta.lift}|Backoff`];
+    exercises.push({ name: meta.lift, exType:'main', setType:'Top Set', sets:1, reps: top.reps, rpeTarget: top.rpe, prescribedWeight: top.weight,
+      note: 'Heavy top set · chase the prescribed RPE, not just the weight' });
+    exercises.push({ name: meta.lift, exType:'main', setType:'Backoff', sets:2, reps: bo.reps, rpeTarget: bo.rpe, prescribedWeight: bo.weight,
+      note: '~90% of top set · same rep count' });
+  } else {
+    const baseName = cfg.hyper;
+    const ex = { name: getHyperSub(dayKey) || baseName, baseName, exType:'hyper', setType:'Accessory',
+      sets: HYPER_SETS[block.num-1], reps: HYPER_REPS[block.num-1], rpeTarget: wib <= 2 ? 7 : 8,
+      note: 'Autoregulated · pick a weight that matches the RPE target, not a fixed number' };
+    if (week === 1) { ex.startWeight = HYPER_START_WEIGHT; ex.note = `Autoregulated · start around ${HYPER_START_WEIGHT}-150 lbs and adjust to hit the RPE target`; }
+    attachPrev(ex);
+    exercises.push(ex);
+  }
+
+  (cfg.accessories || []).forEach(([baseName, kind]) => {
+    const sub = getAccessorySub(baseName);
+    const ex = { name: sub || baseName, baseName, category: categoryForAccessory(baseName), exType:'accessory', setType:'Accessory',
+      sets: accSets(block), reps: ACC_REPS[kind][block.num-1], note: '' };
+    attachPrev(ex);
+    exercises.push(ex);
+  });
+  return { meta, block, week, exercises };
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// STATE / PERSISTENCE
+// ══════════════════════════════════════════════════════════════════════
+let currentWeek = 1;
+let activeDay = 'day1';
+const mem = {};
+function sk(w, d) { return `ppl16_w${w}_${d}`; }
+function loadState(w, d) {
+  const key = sk(w,d);
+  try { const r = localStorage.getItem(key); if (r) return JSON.parse(r); } catch(e) {}
+  return mem[key] || null;
+}
+function saveState(w, d, state) {
+  const key = sk(w,d);
+  mem[key] = state;
+  try { localStorage.setItem(key, JSON.stringify(state)); } catch(e) {}
+}
+function savePos() { try { localStorage.setItem('ppl16_pos', JSON.stringify({ week: currentWeek, day: activeDay })); } catch(e) {} }
+function loadPos() { try { const r = localStorage.getItem('ppl16_pos'); if (r) return JSON.parse(r); } catch(e) {} return null; }
+
+// Substitutions are standing preferences keyed by the default exercise name (accessory) or by dayKey (hypertrophy lift).
+function loadSubs() {
+  try { const r = localStorage.getItem('ppl16_substitutions_v1'); if (r) return JSON.parse(r); } catch(e) {}
+  return mem.subs || { accessory:{}, hyper:{} };
+}
+function saveSubs(subs) { mem.subs = subs; try { localStorage.setItem('ppl16_substitutions_v1', JSON.stringify(subs)); } catch(e) {} }
+function getAccessorySub(baseName) { return (loadSubs().accessory || {})[baseName] || null; }
+function getHyperSub(dayKey) { return (loadSubs().hyper || {})[dayKey] || null; }
+function setAccessorySub(k, n) { const s = loadSubs(); s.accessory = s.accessory || {}; s.accessory[k] = n; saveSubs(s); }
+function clearAccessorySub(k) { const s = loadSubs(); if (s.accessory) delete s.accessory[k]; saveSubs(s); }
+function setHyperSub(k, n) { const s = loadSubs(); s.hyper = s.hyper || {}; s.hyper[k] = n; saveSubs(s); }
+function clearHyperSub(k) { const s = loadSubs(); if (s.hyper) delete s.hyper[k]; saveSubs(s); }
+
+function freshSetRow() { return { weight:'', reps:'', rpe:'', checked:false, syncStatus:'none' }; }
+function getState(week, dayKey, day) {
+  const saved = loadState(week, dayKey);
+  const state = saved || { sets:{}, notes:'', completed:false };
+  day.exercises.forEach((ex, exIdx) => {
+    const k = `${exIdx}`;
+    if (!state.sets[k] || state.sets[k].length !== ex.sets) {
+      const prev = state.sets[k] || [];
+      state.sets[k] = Array.from({length: ex.sets}, (_, i) => prev[i] || freshSetRow());
+    }
+  });
+  return state;
+}
+function getCurState() { return getState(currentWeek, activeDay, resolveDay(currentWeek, activeDay)); }
+function saveCur(state) { saveState(currentWeek, activeDay, state); }
+function isCompleted(week, dayKey) { const s = loadState(week, dayKey); return !!(s && s.completed); }
+
+// Last week's logged sets for hypertrophy + accessory work on the same day, keyed by exercise name.
+// Only populated when last week's session was marked complete.
+function prevWeekAccessoryMap(week, dayKey) {
+  const map = {};
+  const prevWeek = week - 1;
+  if (prevWeek < 1 || !isCompleted(prevWeek, dayKey)) return map;
+  const prevState = loadState(prevWeek, dayKey);
+  if (!prevState || !prevState.sets) return map;
+  const prevDay = resolveDay(prevWeek, dayKey);
+  prevDay.exercises.forEach((pe, pIdx) => {
+    if (pe.exType !== 'accessory' && pe.exType !== 'hyper') return;
+    const rows = prevState.sets[pIdx];
+    if (rows) map[pe.name] = rows;
+  });
+  return map;
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// SYNC (Google Apps Script Web App)
+// ══════════════════════════════════════════════════════════════════════
+function getWebAppUrl() { try { return localStorage.getItem('ppl16_webapp_url') || ''; } catch(e) { return mem.webAppUrl || ''; } }
+function setWebAppUrl(url) { mem.webAppUrl = url; try { localStorage.setItem('ppl16_webapp_url', url); } catch(e) {} }
+function todayStr() { const d = new Date(); return `${d.getMonth()+1}/${d.getDate()}/${d.getFullYear()}`; }
+
+// One throwaway iframe + form per request. Form posts skip CORS, and separate iframes
+// keep rapid back-to-back submits from cancelling each other. A resolved promise only
+// means the browser submitted the form; check the Sheet's Log tab to confirm a real write.
+let __syncReqCounter = 0;
+function postToSheet(payload) {
+  return new Promise((resolve, reject) => {
+    const url = getWebAppUrl();
+    if (!url) { reject(new Error('no-url')); return; }
+    const reqId = 'ppl16Sync_' + (++__syncReqCounter);
+    const iframe = document.createElement('iframe');
+    iframe.name = reqId; iframe.style.display = 'none';
+    document.body.appendChild(iframe);
+    const form = document.createElement('form');
+    form.method = 'POST'; form.action = url; form.target = reqId; form.style.display = 'none';
+    const input = document.createElement('input');
+    input.type = 'hidden'; input.name = 'payload'; input.value = JSON.stringify(payload);
+    form.appendChild(input);
+    document.body.appendChild(form);
+    function cleanup() {
+      if (form.parentNode) form.parentNode.removeChild(form);
+      setTimeout(() => { if (iframe.parentNode) iframe.parentNode.removeChild(iframe); }, 4000);
+    }
+    try { form.submit(); } catch (e) { cleanup(); reject(new Error('form submit error: ' + e.message)); return; }
+    setTimeout(() => { cleanup(); resolve({ ok: true, optimistic: true }); }, 800);
+  });
+}
+
+// Atomic read-modify-write of one set row (no await between fetch and save), so overlapping
+// syncs can't overwrite each other's status updates.
+function applySetPatch(week, dayKey, exIdx, setIdx, patch) {
+  const day = resolveDay(week, dayKey);
+  const state = getState(week, dayKey, day);
+  const row = state.sets[exIdx] && state.sets[exIdx][setIdx];
+  if (!row) return state;
+  Object.assign(row, patch);
+  saveState(week, dayKey, state);
+  return state;
+}
+
+function isRowEmpty(row) {
+  return !row.weight && row.weight !== 0 && !row.reps && row.reps !== 0 && !row.rpe && row.rpe !== 0 && !row.checked;
+}
+// Merge sets logged on another device into this browser. Never overwrites a row that has local data.
+function mergeLogRows(rows) {
+  let filledCount = 0, daysTouched = 0;
+  const groups = {};
+  rows.forEach(r => {
+    const dayKey = dayKeyForSession(r.session);
+    const week = parseInt(r.week, 10);
+    if (!dayKey || !week || week < 1 || week > 16) return;
+    (groups[`${week}|${dayKey}`] = groups[`${week}|${dayKey}`] || []).push(r);
+  });
+  Object.keys(groups).forEach(key => {
+    const [weekStr, dayKey] = key.split('|');
+    const week = parseInt(weekStr, 10);
+    const day = resolveDay(week, dayKey);
+    if (day.meta.kind === 'rest') return;
+    const state = getState(week, dayKey, day);
+    const nameToIdx = {};
+    let topIdx = -1, backoffIdx = -1;
+    day.exercises.forEach((ex, idx) => {
+      if (ex.exType === 'main') { if (ex.setType === 'Top Set') topIdx = idx; else backoffIdx = idx; }
+      else nameToIdx[ex.name] = idx;
+    });
+    let dayFilled = false;
+    groups[key].forEach(r => {
+      let exIdx;
+      if (r.setType === 'Top Set') exIdx = topIdx;
+      else if (r.setType === 'Backoff') exIdx = backoffIdx;
+      else exIdx = nameToIdx[r.exercise];
+      if (exIdx === undefined || exIdx < 0) return;
+      const setIdx = parseInt(r.setNum, 10) - 1;
+      const setRows = state.sets[exIdx];
+      if (!setRows || !setRows[setIdx]) return;
+      const localRow = setRows[setIdx];
+      if (!isRowEmpty(localRow)) return;
+      localRow.weight = r.weight; localRow.reps = r.reps; localRow.rpe = r.rpe;
+      localRow.checked = true; localRow.syncStatus = 'synced';
+      filledCount++; dayFilled = true;
+    });
+    if (dayFilled) {
+      state.completed = true;
+      saveState(week, dayKey, state);
+      daysTouched++;
+    }
+  });
+  return { filledCount, daysTouched };
+}
+async function fetchSheet(action) {
+  const url = getWebAppUrl();
+  if (!url) return { ok:false, reason:'no-url' };
+  try {
+    const res = await fetch(url + (url.indexOf('?') >= 0 ? '&' : '?') + 'action=' + action);
+    const json = await res.json();
+    if (!json || !json.ok) return { ok:false, reason:'bad-response', error: json && json.error };
+    return { ok:true, json };
+  } catch (e) { return { ok:false, reason:'fetch-failed', error: e.message }; }
+}
+async function pullFromSheet() {
+  const r = await fetchSheet('getLog');
+  if (!r.ok) return r;
+  const m = mergeLogRows(r.json.rows || []);
+  return { ok:true, filledCount: m.filledCount, daysTouched: m.daysTouched };
+}
+
+// Plan sync: if the training maxes in the Sheet change, the Plan grid recalculates there.
+// Pull it so the prescribed weights shown here match. Grid columns: week, block, reps, rpe, %, then
+// Squat top/backoff, Bench top/backoff, Deadlift top/backoff.
+function applyPlanGrid(grid) {
+  const lifts = ['Squat','Bench','Deadlift'];
+  let changed = 0;
+  const next = {};
+  for (const row of grid) {
+    const w = Number(row[0]), reps = Number(row[2]), rpe = Number(row[3]);
+    if (!(w >= 1 && w <= 16) || !isFinite(reps) || !isFinite(rpe)) return -1;
+    for (let li = 0; li < 3; li++) {
+      const top = Number(row[5 + li*2]), bo = Number(row[6 + li*2]);
+      if (!(top > 0) || !(bo > 0)) return -1;
+      next[`${w}|${lifts[li]}|Top Set`] = { weight: top, reps, rpe };
+      next[`${w}|${lifts[li]}|Backoff`] = { weight: bo, reps, rpe: rpe - 1 };
+    }
+  }
+  Object.keys(next).forEach(k => {
+    if (!PLAN[k] || PLAN[k].weight !== next[k].weight || PLAN[k].reps !== next[k].reps || PLAN[k].rpe !== next[k].rpe) changed++;
+    PLAN[k] = next[k];
+  });
+  return changed;
+}
+function loadStoredPlan() {
+  try { const r = localStorage.getItem('ppl16_plan_grid_v1'); if (r) applyPlanGrid(JSON.parse(r)); } catch(e) {}
+}
+async function pullPlan() {
+  const r = await fetchSheet('getPlan');
+  if (!r.ok) return { ok:false };
+  const grid = r.json.rows || [];
+  const changed = applyPlanGrid(grid);
+  if (changed < 0) return { ok:false };
+  try { localStorage.setItem('ppl16_plan_grid_v1', JSON.stringify(grid)); } catch(e) {}
+  return { ok:true, changed };
+}
+
+function payloadFor(week, dayKey, day, ex, snapNotes, si, row) {
+  return { date: todayStr(), week, session: day.meta.session, lift: day.meta.lift, exercise: ex.name,
+    setType: ex.setType, setNum: si + 1, weight: row.weight, reps: row.reps, rpe: row.rpe, notes: snapNotes || '' };
+}
+async function syncSet(exIdx, setIdx) {
+  const week = currentWeek, dayKey = activeDay;
+  const day = resolveDay(week, dayKey);
+  const ex = day.exercises[exIdx];
+  const snap = getState(week, dayKey, day);
+  const srcRow = snap.sets[exIdx][setIdx];
+  if (!srcRow.weight && !srcRow.reps) return;
+  applySetPatch(week, dayKey, exIdx, setIdx, { syncStatus: 'pending' });
+  renderDay();
+  try {
+    await postToSheet({ type:'sets', rows:[payloadFor(week, dayKey, day, ex, snap.notes, setIdx, srcRow)] });
+    applySetPatch(week, dayKey, exIdx, setIdx, { syncStatus: 'synced', syncError: '' });
+  } catch (e) {
+    applySetPatch(week, dayKey, exIdx, setIdx, { syncStatus: 'failed', syncError: e.message });
+  }
+  renderDay();
+}
+async function syncAllPending() {
+  let pendingCount = 0, failCount = 0;
+  const keys = [];
+  try { for (let i=0;i<localStorage.length;i++){ const k = localStorage.key(i); if (k && /^ppl16_w\d+_day\d$/.test(k)) keys.push(k); } } catch(e) {}
+  for (const key of keys) {
+    const m = key.match(/^ppl16_w(\d+)_(day\d)$/);
+    const week = parseInt(m[1]), dayKey = m[2];
+    if (!DAY_META[dayKey] || DAY_META[dayKey].kind === 'rest') continue;
+    const day = resolveDay(week, dayKey);
+    const snap = getState(week, dayKey, day);
+    for (const exIdx of Object.keys(snap.sets)) {
+      const ex = day.exercises[exIdx];
+      if (!ex) continue;
+      const rows = snap.sets[exIdx];
+      for (let si = 0; si < rows.length; si++) {
+        const row = rows[si];
+        if ((row.weight || row.reps) && row.syncStatus !== 'synced') {
+          pendingCount++;
+          try {
+            await postToSheet({ type:'sets', rows:[payloadFor(week, dayKey, day, ex, snap.notes, si, row)] });
+            applySetPatch(week, dayKey, exIdx, si, { syncStatus: 'synced', syncError: '' });
+          } catch(e) {
+            applySetPatch(week, dayKey, exIdx, si, { syncStatus: 'failed', syncError: e.message });
+            failCount++;
+          }
+        }
+      }
+    }
+  }
+  const plan = await pullPlan();
+  const pull = await pullFromSheet();
+  renderBlockStrip(); renderWeekStrip(); renderTabs(); renderDay(); updateSyncIndicator();
+  let msg;
+  if (!getWebAppUrl()) msg = 'Set your Web App URL in Settings first';
+  else if (pendingCount === 0) msg = 'Up to date';
+  else if (failCount === 0) msg = `Pushed ${pendingCount} set${pendingCount===1?'':'s'} ✓`;
+  else msg = `Pushed ${pendingCount-failCount}/${pendingCount}, ${failCount} failed, check connection`;
+  if (pull.ok && pull.filledCount > 0) msg += ` · pulled ${pull.filledCount} set${pull.filledCount===1?'':'s'} ✓`;
+  if (plan.ok && plan.changed > 0) msg += ` · plan updated from Sheet ✓`;
+  showToast(msg, failCount > 0 || !getWebAppUrl());
+}
+function countPendingOrFailed() {
+  let n = 0;
+  try {
+    for (let i=0;i<localStorage.length;i++){
+      const k = localStorage.key(i);
+      if (!k || !/^ppl16_w\d+_day\d$/.test(k)) continue;
+      let state; try { state = JSON.parse(localStorage.getItem(k)); } catch(e) { continue; }
+      if (!state || !state.sets) continue;
+      Object.values(state.sets).forEach(rows => rows.forEach(r => { if ((r.weight || r.reps) && r.syncStatus !== 'synced') n++; }));
+    }
+  } catch(e) {}
+  return n;
+}
+function updateSyncIndicator() {
+  const n = countPendingOrFailed();
+  const btn = document.getElementById('syncAllBtn');
+  btn.classList.toggle('sync-pending', n > 0);
+  btn.title = n > 0 ? `${n} set(s) waiting to sync` : 'Sync pending sets';
+}
+function showToast(msg, isErr) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.toggle('err', !!isErr);
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 2800);
+}
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ══════════════════════════════════════════════════════════════════════
+// RENDER
+// ══════════════════════════════════════════════════════════════════════
+function renderBlockStrip() {
+  document.getElementById('blockStrip').innerHTML = BLOCKS.map(b => {
+    const active = blockForWeek(currentWeek).num === b.num;
+    return `<div class="block-cell ${active?'active':''}" onclick="switchWeek(${b.weeks[0]})">
+      <span class="bc-label">Block ${b.num}</span>
+      <span class="bc-name">${b.name.replace('-', '-<br>')}</span>
+    </div>`;
+  }).join('');
+}
+function renderWeekStrip() {
+  const block = blockForWeek(currentWeek);
+  document.getElementById('weekStrip').innerHTML = block.weeks.map(w => {
+    const active = w === currentWeek;
+    const reps = PLAN[`${w}|Squat|Top Set`].reps;
+    return `<div class="week-cell ${active?'active':''}" onclick="switchWeek(${w})">
+      <span class="wc-label">Week ${w}</span>
+      <span class="wc-rpe">RPE ${rpeForWeek(w)} · ${reps} reps</span>
+    </div>`;
+  }).join('');
+}
+function renderTabs() {
+  document.getElementById('dayTabs').innerHTML = DAY_ORDER.map(dk => {
+    const meta = DAY_META[dk];
+    const aCls = dk === activeDay ? `active-${meta.type}` : '';
+    const dCls = isCompleted(currentWeek, dk) ? 'completed' : '';
+    return `<div class="day-tab ${aCls} ${dCls}" onclick="switchDay('${dk}')">
+      <span class="tab-label">${meta.label}</span>
+      <span class="tab-name">${meta.tab}</span>
+      <span class="tab-done">✓</span>
+    </div>`;
+  }).join('');
+}
+function syncDotClass(status) {
+  if (status === 'synced') return 'sync-dot synced';
+  if (status === 'pending') return 'sync-dot pending';
+  if (status === 'failed') return 'sync-dot failed';
+  return 'sync-dot';
+}
+
+function renderDay() {
+  const day = resolveDay(currentWeek, activeDay);
+  const meta = day.meta;
+  const type = meta.type;
+
+  if (meta.kind === 'rest') {
+    const state = loadState(currentWeek, activeDay) || { notes:'', completed:false };
+    document.getElementById('dayContent').innerHTML = `
+      <div class="day-card">
+        <div class="day-card-header">
+          <div><div class="day-card-title">${meta.title}</div>
+          <div class="day-card-desc">Light walk, mobility work, foam rolling. No lifting.</div></div>
+          <span class="badge badge-rest">Rest</span>
+        </div>
+        <div class="rest-card"><div class="ex-name">Recovery Day</div><div class="ex-prescription">Nothing to log. Come back tomorrow.</div></div>
+        <div class="notes-section">
+          <span class="notes-label">Notes</span>
+          <textarea class="notes-textarea" placeholder="How's the body feeling? Sleep, soreness, anything to flag…" oninput="updateRestNotes(this)">${esc(state.notes||'')}</textarea>
+        </div>
+      </div>`;
+    return;
+  }
+
+  let totalSets = 0, checkedSets = 0;
+  const state = getState(currentWeek, activeDay, day);
+
+  const exHTML = day.exercises.map((ex, exIdx) => {
+    const rows = state.sets[exIdx];
+    const setRowsHTML = rows.map((row, si) => {
+      totalSets++;
+      if (row.checked) checkedSets++;
+      const doneCls = row.checked ? `done done-${type}` : '';
+      const carries = ex.exType !== 'main' && ex.prevWeekSets;
+      const prevRow = carries ? ex.prevWeekSets[si] : null;
+      const has = v => v !== '' && v != null;
+      const prevW = !!(prevRow && has(prevRow.weight)), prevR = !!(prevRow && has(prevRow.reps)), prevP = !!(prevRow && has(prevRow.rpe));
+      const wPh = prevW ? prevRow.weight : (ex.prescribedWeight || ex.startWeight || 'lbs');
+      const rPh = prevR ? prevRow.reps : (ex.reps || 'reps');
+      const rpePh = prevP ? prevRow.rpe : (ex.rpeTarget || 'RPE');
+      const wCls = (ex.prescribedWeight || ex.startWeight || prevW) ? '' : 'no-prescribed';
+      const rCls = (prevR || ex.exType === 'main') ? '' : 'no-prescribed';
+      const rpeCls = (prevP || ex.rpeTarget) ? '' : 'no-prescribed';
+      return `<div class="set-row">
+        <span class="set-num">S${si+1}</span>
+        <input class="mini-input ${wCls}" type="number" inputmode="decimal" placeholder="${esc(wPh)}" value="${esc(row.weight)}" data-ex="${exIdx}" data-si="${si}" data-field="weight" onchange="updateField(this)">
+        <input class="mini-input ${rCls}" type="text" inputmode="numeric" placeholder="${esc(rPh)}" value="${esc(row.reps)}" data-ex="${exIdx}" data-si="${si}" data-field="reps" onchange="updateField(this)">
+        <input class="mini-input ${rpeCls}" type="number" inputmode="decimal" placeholder="${esc(rpePh)}" value="${esc(row.rpe)}" data-ex="${exIdx}" data-si="${si}" data-field="rpe" onchange="updateField(this)">
+        <div class="set-check ${doneCls}" data-ex="${exIdx}" data-si="${si}" onclick="toggleCheck(this)">
+          <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="${syncDotClass(row.syncStatus)}" title="${esc(row.syncStatus==='failed' && row.syncError ? row.syncError : row.syncStatus)}"></div>
+      </div>`;
+    }).join('');
+
+    const rpeTag = ex.rpeTarget ? `<span class="prescribed-tag">RPE ${ex.rpeTarget}</span>` : '';
+    const wTag = ex.prescribedWeight ? `<span class="prescribed-tag">${ex.prescribedWeight} lbs</span>` : '';
+    const setTypeLabel = ex.exType === 'main' ? ex.setType : (ex.exType === 'hyper' ? 'Hypertrophy' : 'Accessory');
+    const hasPrev = ex.exType !== 'main' && ex.prevWeekSets && ex.prevWeekSets.some(r => r && (r.weight !== '' || r.reps !== '' || r.rpe !== ''));
+    const prevTag = hasPrev ? `<span class="prescribed-tag" title="Amber placeholders below show what you logged last week">↻ Last Wk</span>` : '';
+    let swapBtn = '';
+    if (ex.exType === 'accessory') swapBtn = `<span class="swap-btn" title="Swap exercise" data-swap-kind="accessory" data-swap-key="${esc(ex.baseName)}" data-swap-cat="${esc(ex.category)}" data-swap-label="${esc(ex.baseName)}">⇄</span>`;
+    else if (ex.exType === 'hyper') swapBtn = `<span class="swap-btn" title="Swap lift variation" data-swap-kind="hyper" data-swap-key="${activeDay}" data-swap-cat="${type}" data-swap-label="${esc(ex.baseName)}">⇄</span>`;
+
+    return `<div class="exercise-row">
+      <div class="ex-name">${esc(ex.name)}${wTag}${ex.exType!=='main'?rpeTag:''}${prevTag}${swapBtn}</div>
+      <div class="ex-prescription">${setTypeLabel} · ${ex.sets} set${ex.sets===1?'':'s'} × <span>${ex.reps} reps</span>${ex.exType==='main'?` · Target RPE ${ex.rpeTarget}`:''}</div>
+      ${ex.note ? `<div class="ex-prescription" style="font-style:italic;">${esc(ex.note)}</div>` : ''}
+      <div class="col-labels"><span></span><span>Weight</span><span>Reps</span><span>RPE</span><span></span><span></span></div>
+      <div class="sets-wrap">${setRowsHTML}</div>
+    </div>`;
+  }).join('');
+
+  const pct = totalSets ? Math.round((checkedSets/totalSets)*100) : 0;
+  document.getElementById('dayContent').innerHTML = `
+    <div class="day-card">
+      <div class="day-card-header">
+        <div><div class="day-card-title">${meta.title}</div>
+        <div class="day-card-desc">${day.block.name} · Week ${currentWeek} · RPE ${rpeForWeek(currentWeek)} wave</div></div>
+        <span class="badge badge-${type}">${type.charAt(0).toUpperCase()+type.slice(1)}</span>
+      </div>
+      <div class="section-header"><span class="section-label">${meta.kind==='main'?'Main Lift + Accessories':'Hypertrophy Lift + Accessories'}</span><div class="section-rule"></div></div>
+      <div class="exercise-list">${exHTML}</div>
+      <div class="notes-section">
+        <span class="notes-label">Session Notes</span>
+        <textarea class="notes-textarea" placeholder="How did the session feel? Anything to adjust next week…" oninput="updateNotes(this)">${esc(state.notes||'')}</textarea>
+      </div>
+      <div class="day-footer">
+        <div class="progress-wrap">
+          <div class="progress-label"><span>Sets completed</span><span>${checkedSets} / ${totalSets}</span></div>
+          <div class="progress-bar-bg"><div class="progress-bar-fill fill-${type}" style="width:${pct}%"></div></div>
+        </div>
+        <button class="finish-btn finish-${type}" onclick="finishWorkout()" ${state.completed?'disabled':''}>${state.completed ? '✓ Done' : 'Finish'}</button>
+      </div>
+    </div>`;
+  updateSyncIndicator();
+}
+
+function updateField(input) {
+  const exIdx = input.dataset.ex, si = parseInt(input.dataset.si), field = input.dataset.field;
+  const state = getCurState();
+  state.sets[exIdx][si][field] = input.value;
+  saveCur(state);
+}
+function toggleCheck(el) {
+  const exIdx = el.dataset.ex, si = parseInt(el.dataset.si);
+  const state = getCurState();
+  const row = state.sets[exIdx][si];
+  row.checked = !row.checked;
+  saveCur(state);
+  renderDay();
+  if (row.checked && (row.weight || row.reps)) syncSet(parseInt(exIdx), si);
+}
+function updateNotes(el) { const s = getCurState(); s.notes = el.value; saveCur(s); }
+function updateRestNotes(el) {
+  const state = loadState(currentWeek, activeDay) || { notes:'', completed:false };
+  state.notes = el.value;
+  saveState(currentWeek, activeDay, state);
+}
+function finishWorkout() {
+  const day = resolveDay(currentWeek, activeDay);
+  const state = day.meta.kind === 'rest' ? (loadState(currentWeek, activeDay) || {notes:'',completed:false}) : getCurState();
+  state.completed = true;
+  saveState(currentWeek, activeDay, state);
+  showToast('Session Complete ✓', false);
+  renderTabs(); renderDay();
+}
+function switchDay(dk) { activeDay = dk; savePos(); renderTabs(); renderDay(); }
+function switchWeek(w) { currentWeek = w; savePos(); renderBlockStrip(); renderWeekStrip(); renderTabs(); renderDay(); }
+
+// ══════════════════════════════════════════════════════════════════════
+// PANELS
+// ══════════════════════════════════════════════════════════════════════
+function openPanel(id) { document.getElementById(id).classList.add('show'); }
+function closePanel(id) { document.getElementById(id).classList.remove('show'); }
+
+let swapCtx = null;
+let swapItems = [];
+function openSwapPicker(kind, key, category, baseLabel) {
+  swapCtx = { kind, key, category, baseLabel };
+  const pool = (kind === 'accessory' ? EXERCISE_DB.accessory[category] : EXERCISE_DB.hyper[category]) || [];
+  const current = kind === 'accessory' ? getAccessorySub(key) : getHyperSub(key);
+  document.getElementById('swapSub').textContent = kind === 'accessory'
+    ? `Choose a replacement for ${baseLabel}. Same sets and reps, different movement, from the ${category} pool for your garage-gym setup.`
+    : `Choose a ${category} variation for this day. Applies to every week this day comes up.`;
+  swapItems = [{ name: baseLabel, isDefault: true }, ...pool.filter(n => n !== baseLabel).map(n => ({ name: n, isDefault: false }))];
+  document.getElementById('swapList').innerHTML = swapItems.map((it, idx) => {
+    const active = it.isDefault ? !current : (current === it.name);
+    return `<button type="button" class="swap-list-btn ${active?'active':''}" data-idx="${idx}">${esc(it.name)}${it.isDefault?' (Default)':''}</button>`;
+  }).join('');
+  openPanel('swapOverlay');
+}
+function chooseSwap(name, isDefault) {
+  if (!swapCtx) return;
+  if (swapCtx.kind === 'accessory') { if (isDefault) clearAccessorySub(swapCtx.key); else setAccessorySub(swapCtx.key, name); }
+  else { if (isDefault) clearHyperSub(swapCtx.key); else setHyperSub(swapCtx.key, name); }
+  closePanel('swapOverlay');
+  renderTabs(); renderDay();
+  showToast('Exercise swapped ✓', false);
+}
+document.getElementById('swapList').addEventListener('click', (e) => {
+  const btn = e.target.closest('button[data-idx]');
+  if (!btn) return;
+  const it = swapItems[parseInt(btn.dataset.idx)];
+  if (it) chooseSwap(it.name, !!it.isDefault);
+});
+document.getElementById('dayContent').addEventListener('click', (e) => {
+  const btn = e.target.closest('.swap-btn');
+  if (!btn) return;
+  openSwapPicker(btn.dataset.swapKind, btn.dataset.swapKey, btn.dataset.swapCat, btn.dataset.swapLabel);
+});
+document.querySelectorAll('[data-close]').forEach(btn => { btn.addEventListener('click', () => closePanel(btn.dataset.close)); });
+document.getElementById('settingsBtn').addEventListener('click', () => {
+  document.getElementById('webAppUrl').value = getWebAppUrl();
+  document.getElementById('connStatus').textContent = '';
+  document.getElementById('connStatus').className = 'status-line';
+  openPanel('settingsOverlay');
+});
+document.getElementById('saveUrlBtn').addEventListener('click', () => {
+  setWebAppUrl(document.getElementById('webAppUrl').value.trim());
+  const s = document.getElementById('connStatus');
+  s.textContent = 'Saved.'; s.className = 'status-line ok';
+});
+document.getElementById('testConnBtn').addEventListener('click', async () => {
+  const url = document.getElementById('webAppUrl').value.trim();
+  const s = document.getElementById('connStatus');
+  if (!url) { s.textContent = 'Enter a Web App URL first.'; s.className = 'status-line bad'; return; }
+  if (!/^https:\/\/script\.google\.com\/macros\/s\/[^/]+\/exec\/?$/.test(url)) {
+    s.textContent = "That doesn't look like a deployed Web App URL. It should look like https://script.google.com/macros/s/AKfycb.../exec (not /dev, and not the script editor URL).";
+    s.className = 'status-line bad'; return;
+  }
+  s.textContent = 'Testing…'; s.className = 'status-line';
+  let res;
+  try { res = await fetch(url, { method: 'GET' }); }
+  catch (e) {
+    try {
+      await fetch(url, { method: 'GET', mode: 'no-cors' });
+      s.textContent = "✓ Reached the server, but this browser can't read the response (common when the file is opened locally instead of hosted). Syncing doesn't need it. Check off a real set and confirm it appears in the Log tab to be sure.";
+      s.className = 'status-line ok';
+    } catch (e2) {
+      s.textContent = 'Could not reach the server at all (' + e2.message + '). Check your connection and that the URL was copied in full from a live deployment.';
+      s.className = 'status-line bad';
+    }
+    return;
+  }
+  const raw = await res.text();
+  let json = null;
+  try { json = JSON.parse(raw); } catch (e) {}
+  if (!json) {
+    s.textContent = /accounts\.google\.com|ServiceLogin|Sign in|Authorization required/i.test(raw)
+      ? 'Got a Google sign-in page instead of a response. Redeploy (Deploy > Manage deployments > Edit) with "Who has access" set to Anyone.'
+      : 'Got an unexpected response (HTTP ' + res.status + ', not JSON). Open the Web App URL directly in a browser tab to see the error.';
+    s.className = 'status-line bad'; return;
+  }
+  if (json.ok) { s.textContent = '✓ Connected: ' + (json.message || 'endpoint is live.'); s.className = 'status-line ok'; }
+  else { s.textContent = 'Reached the endpoint, but it reported an error: ' + (json.error || 'unknown'); s.className = 'status-line bad'; }
+});
+document.getElementById('bwBtn').addEventListener('click', () => {
+  document.getElementById('bwDate').value = new Date().toISOString().slice(0,10);
+  document.getElementById('bwWeight').value = '';
+  document.getElementById('bwNotes').value = '';
+  document.getElementById('bwStatus').textContent = '';
+  document.getElementById('bwStatus').className = 'status-line';
+  openPanel('bwOverlay');
+});
+document.getElementById('bwSaveBtn').addEventListener('click', async () => {
+  const dateVal = document.getElementById('bwDate').value;
+  const weight = document.getElementById('bwWeight').value;
+  const notes = document.getElementById('bwNotes').value;
+  const s = document.getElementById('bwStatus');
+  if (!weight) { s.textContent = 'Enter a weight.'; s.className = 'status-line bad'; return; }
+  const [y,m,d] = dateVal.split('-');
+  s.textContent = 'Logging…'; s.className = 'status-line';
+  try {
+    await postToSheet({ type:'bodyweight', date: `${parseInt(m)}/${parseInt(d)}/${y}`, weight, notes });
+    s.textContent = '✓ Logged to sheet.'; s.className = 'status-line ok';
+    showToast('Bodyweight logged ✓', false);
+    setTimeout(() => closePanel('bwOverlay'), 900);
+  } catch (e) {
+    s.textContent = e.message === 'no-url' ? 'Set your Web App URL in Settings first.' : 'Sync failed. Check your connection and the URL in Settings.';
+    s.className = 'status-line bad';
+  }
+});
+document.getElementById('syncAllBtn').addEventListener('click', syncAllPending);
+
+// ══════════════════════════════════════════════════════════════════════
+// BOOT
+// ══════════════════════════════════════════════════════════════════════
+loadStoredPlan();
+(function initPosition() {
+  const pos = loadPos();
+  if (pos && pos.week >= 1 && pos.week <= 16 && DAY_META[pos.day]) { currentWeek = pos.week; activeDay = pos.day; }
+  else { const wd = new Date().getDay(); activeDay = DAY_ORDER[(wd + 6) % 7]; }   // Mon=day1 ... Sun=day7
+})();
+renderBlockStrip(); renderWeekStrip(); renderTabs(); renderDay(); updateSyncIndicator();
+
+if (getWebAppUrl()) {
+  Promise.all([pullPlan(), pullFromSheet()]).then(([plan, pull]) => {
+    const planChanged = plan.ok && plan.changed > 0, pulled = pull.ok && pull.filledCount > 0;
+    if (planChanged || pulled) {
+      renderBlockStrip(); renderWeekStrip(); renderTabs(); renderDay(); updateSyncIndicator();
+      showToast(planChanged ? 'Plan updated from Sheet ✓' : `Pulled ${pull.filledCount} set${pull.filledCount===1?'':'s'} from another device ✓`, false);
+    }
+  }).catch(() => {});
+}
+</script>
+</body>
+</html>
